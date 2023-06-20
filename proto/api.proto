@@ -9,7 +9,8 @@ service LinkService {
 
 message AddLinkRequest {
   string url = 1;
-  repeated string tags = 2;
+  string description = 2;
+  repeated string tags = 3;
 }
 
 message DeleteLinkRequest { string id = 1; }
