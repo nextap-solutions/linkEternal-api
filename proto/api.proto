@@ -1,0 +1,22 @@
+syntax = "proto3";
+package api;
+
+service LinkService {
+  rpc ListLinks(ListLinksRequest) returns (ListLinksResponse);
+  rpc AddLink(AddLinkRequest) returns (Link);
+}
+
+message AddLinkRequest {
+  string url = 1;
+  repeated string tags = 2;
+}
+
+message ListLinksRequest { string keyword = 1; }
+
+message ListLinksResponse { repeated Link data = 1; }
+
+message Link {
+  string id = 1;
+  string url = 2;
+  repeated string tags = 3;
+}
