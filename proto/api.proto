@@ -24,5 +24,6 @@ message ListLinksResponse { repeated Link data = 1; }
 message Link {
   string id = 1;
   string url = 2;
-  repeated string tags = 3;
+  string description = 3;
+  repeated string tags = 4;
 }

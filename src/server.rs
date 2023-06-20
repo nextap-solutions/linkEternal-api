@@ -16,8 +16,6 @@ pub mod link_eternal {
         tonic::include_file_descriptor_set!("api_descriptor");
 }
 
-
-
 #[derive(Debug, Default)]
 pub struct EternalLinkService {
     pub links: RwLock<HashMap<String, link_eternal::Link>>,
@@ -53,6 +51,7 @@ impl LinkService for EternalLinkService {
             id: new_id.to_string(),
             url: add_link_request.url,
             tags: add_link_request.tags,
+            description: add_link_request.description,
         };
         self_links.insert(new_id.to_string(), new_link.clone());
 
