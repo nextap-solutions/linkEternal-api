@@ -1,5 +1,8 @@
+use std::collections::HashMap;
+
 use tokio::sync::RwLock;
 use tonic::{transport::Server, Request, Response, Status};
+use uuid::Uuid;
 
 use link_eternal::{
     link_service_server::{LinkService, LinkServiceServer},
@@ -17,7 +20,7 @@ pub mod link_eternal {
 
 #[derive(Debug, Default)]
 pub struct EternalLinkService {
-    pub links: RwLock<Vec<link_eternal::Link>>,
+    pub links: RwLock<HashMap<String, link_eternal::Link>>,
 }
 
 #[tonic::async_trait]
@@ -29,7 +32,7 @@ impl LinkService for EternalLinkService {
         println!("Got a request: {:?}", request);
 
         let reply = link_eternal::ListLinksResponse {
-            data: self.links.read().await.clone(),
+            data: self.links.read().await.clone().values().cloned().collect(),
         };
 
         Ok(Response::new(reply))
@@ -43,7 +46,7 @@ impl LinkService for EternalLinkService {
 
         let mut self_links = self.links.write().await;
 
-        let new_id = self_links.len() + 1; 
+        let new_id = Uuid::new_v4(); 
 
         let add_link_request = request.into_inner();
         let new_link = link_eternal::Link {
@@ -51,11 +54,9 @@ impl LinkService for EternalLinkService {
             url: add_link_request.url,
             tags: add_link_request.tags,
         };
-        self_links.push(new_link.clone());
+        self_links.insert(new_id.to_string(), new_link.clone());
 
         let reply = new_link.clone();
-
-
 
         Ok(Response::new(reply))
     }
@@ -65,7 +66,11 @@ impl LinkService for EternalLinkService {
         request: Request<link_eternal::DeleteLinkRequest>,
     ) -> Result<Response<link_eternal::DeleteLinkResponse>, Status> {
         println!("Got a request: {:?}", request);
-        Err(Status::unimplemented("Not implemented"))
+
+        let mut self_links = self.links.write().await;
+        self_links.remove(&request.into_inner().id);
+
+        Ok(Response::new(link_eternal::DeleteLinkResponse {}))
     }
 }
 
