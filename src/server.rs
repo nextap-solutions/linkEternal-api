@@ -7,6 +7,9 @@ use link_eternal::{
 
 pub mod link_eternal {
     tonic::include_proto!("api");
+
+    pub(crate) const FILE_DESCRIPTOR_SET: &[u8] =
+        tonic::include_file_descriptor_set!("api_descriptor");
 }
 
 #[derive(Debug, Default)]
@@ -45,20 +48,20 @@ impl LinkService for EternalLinkService {
 
         Ok(Response::new(reply))
     }
-    // async fn list_links(
-    //     &self,
-    //     request: Request<ListLinksRequest>,
-    // ) -> Result<Response<super::ListLinksResponse>, Status>{
-    // Ok()
-    // };
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let service = tonic_reflection::server::Builder::configure()
+        .register_encoded_file_descriptor_set(link_eternal::FILE_DESCRIPTOR_SET)
+        .build()
+        .unwrap();
+
     let addr = "[::1]:50051".parse()?;
     let greeter = EternalLinkService::default();
 
     Server::builder()
+        .add_service(service)
         .add_service(LinkServiceServer::new(greeter))
         .serve(addr)
         .await?;
