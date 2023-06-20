@@ -4,12 +4,17 @@ package api;
 service LinkService {
   rpc ListLinks(ListLinksRequest) returns (ListLinksResponse);
   rpc AddLink(AddLinkRequest) returns (Link);
+  rpc DeleteLink(DeleteLinkRequest) returns (DeleteLinkResponse);
 }
 
 message AddLinkRequest {
   string url = 1;
   repeated string tags = 2;
 }
+
+message DeleteLinkRequest { string id = 1; }
+
+message DeleteLinkResponse { }
 
 message ListLinksRequest { string keyword = 1; }
 

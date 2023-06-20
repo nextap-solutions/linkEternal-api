@@ -1,8 +1,9 @@
+use tokio::sync::RwLock;
 use tonic::{transport::Server, Request, Response, Status};
 
 use link_eternal::{
     link_service_server::{LinkService, LinkServiceServer},
-    AddLinkRequest, ListLinksRequest, ListLinksResponse,
+    AddLinkRequest, ListLinksRequest, ListLinksResponse
 };
 
 pub mod link_eternal {
@@ -12,8 +13,12 @@ pub mod link_eternal {
         tonic::include_file_descriptor_set!("api_descriptor");
 }
 
+
+
 #[derive(Debug, Default)]
-pub struct EternalLinkService {}
+pub struct EternalLinkService {
+    pub links: RwLock<Vec<link_eternal::Link>>,
+}
 
 #[tonic::async_trait]
 impl LinkService for EternalLinkService {
@@ -24,11 +29,7 @@ impl LinkService for EternalLinkService {
         println!("Got a request: {:?}", request);
 
         let reply = link_eternal::ListLinksResponse {
-            data: vec![link_eternal::Link {
-                id: "1".to_string(),
-                url: "https://google.com".into(),
-                tags: vec!["search".into(), "google".into()],
-            }],
+            data: self.links.read().await.clone(),
         };
 
         Ok(Response::new(reply))
@@ -40,13 +41,31 @@ impl LinkService for EternalLinkService {
     ) -> Result<Response<link_eternal::Link>, Status> {
         println!("Got a request: {:?}", request);
 
-        let reply = link_eternal::Link {
-            id: "1".to_string(),
-            url: "https://google.com".into(),
-            tags: vec!["search".into(), "google".into()],
+        let mut self_links = self.links.write().await;
+
+        let new_id = self_links.len() + 1; 
+
+        let add_link_request = request.into_inner();
+        let new_link = link_eternal::Link {
+            id: new_id.to_string(),
+            url: add_link_request.url,
+            tags: add_link_request.tags,
         };
+        self_links.push(new_link.clone());
+
+        let reply = new_link.clone();
+
+
 
         Ok(Response::new(reply))
+    }
+
+    async fn delete_link(
+        &self,
+        request: Request<link_eternal::DeleteLinkRequest>,
+    ) -> Result<Response<link_eternal::DeleteLinkResponse>, Status> {
+        println!("Got a request: {:?}", request);
+        Err(Status::unimplemented("Not implemented"))
     }
 }
 
